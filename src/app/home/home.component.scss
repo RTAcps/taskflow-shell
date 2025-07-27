@@ -1,0 +1,19 @@
+.home-container {
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+    
+    mat-card {
+        margin-top: 20px;
+   
+        ul {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 10px;
+        }
+    }
+    
+}
