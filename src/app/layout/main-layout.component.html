@@ -4,13 +4,13 @@
             <h2>Taskflow</h2>
         </div>
         <mat-nav-list>
-            <a mat-list-item routerLink="/Gerenciamento de Projetos">
+            <a mat-list-item (click)="navigate('/project-management')">
             Gerenciamento de Projetos
             </a>
-            <a mat-list-item routerLink="/Colaboração em Tempo Real">
+            <a mat-list-item (click)="navigate('/real-time-collaboration')">
             Colaboração em Tempo Real
             </a>
-            <a mat-list-item routerLink="/Análise e Relatórios">
+            <a mat-list-item (click)="navigate('/analytics-report')">
             Análise e Relatórios
             </a>
         </mat-nav-list>
@@ -32,7 +32,7 @@
             <span>Bem-vindo ao Taskflow</span>
         </mat-toolbar>
         <div class="content">
-            <ng-content></ng-content>
+            <router-outlet></router-outlet>
         </div>
     </mat-sidenav-content>
 </mat-sidenav-container>

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatListModule } from '@angular/material/list';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-main-layout',
@@ -13,10 +13,15 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
     MatSidenavModule,
     MatToolbarModule,
     MatListModule,
-    RouterLink,
-    RouterLinkActive
+    RouterOutlet
   ],
   templateUrl: './main-layout.component.html',
   styleUrls: ['./main-layout.component.scss'],
 })
-export class MainLayoutComponent {}
+export class MainLayoutComponent {
+  constructor(private router: Router) {}
+
+  navigate(path: string) {
+    this.router.navigate([path]);
+  }
+}
