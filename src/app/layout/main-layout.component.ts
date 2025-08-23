@@ -18,6 +18,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   overlayMenuOpenSubscription: Subscription;
   menuOutsideClickListener: any;
   windowResizeListener: Function | null = null;
+  hasProfile = false;
 
   get containerClass(): { [key: string]: boolean } {
     return {

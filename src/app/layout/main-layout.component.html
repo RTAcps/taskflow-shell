@@ -16,10 +16,12 @@
                 <i class="pi pi-bell"></i>
                 <span>Notifications</span>
             </button>
-            <button type="button" class="layout-topbar-button" title="Profile">
-                <i class="pi pi-user"></i>
-                <span>Profile</span>
-            </button>
+            @if (hasProfile) {
+                <button type="button" class="layout-topbar-button" title="Profile">
+                    <i class="pi pi-user"></i>
+                    <span>Profile</span>
+                </button>
+            }
         </div>
 
         <div class="social-links">
