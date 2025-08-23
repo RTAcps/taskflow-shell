@@ -10,26 +10,36 @@ export const routes: Routes = [
     },
     {
         path: 'project-management',
-        loadChildren: () => loadRemoteModule({
-            type: 'module',
-            remoteEntry: 'http://localhost:4201/remoteEntry.js',
-            exposedModule: './component'
-        }).then(m => m.AppComponent)
+        // Usar loadRemoteModule diretamente sem injeção de dependência
+        loadComponent: () => 
+            loadRemoteModule({
+                type: 'module',
+                remoteEntry: 'http://localhost:4201/remoteEntry.js',
+                exposedModule: './Module'
+            }).then(m => m.AppComponent)
     },
     {
         path: 'real-time-collaboration',
-        loadChildren: () => loadRemoteModule({
-            type: 'module',
-            remoteEntry: 'http://localhost:4202/remoteEntry.js',
-            exposedModule: './component'
-        }).then(m => m.AppComponent)
+        loadComponent: () => 
+            loadRemoteModule({
+                type: 'module',
+                remoteEntry: 'http://localhost:4202/remoteEntry.js',
+                exposedModule: './RealTimeCollaborationComponent'
+            }).then(m => {
+                // O componente pode ter um nome diferente no MFE
+                return m.ReactiveRootComponent || m.AppComponent;
+            })
     },
     {
         path: 'analytics-report',
-        loadChildren: () => loadRemoteModule({
-            type: 'module',
-            remoteEntry: 'http://localhost:4203/remoteEntry.js',
-            exposedModule: './component'
-        }).then(m => m.AppComponent)
+        loadComponent: () => 
+            loadRemoteModule({
+                type: 'module',
+                remoteEntry: 'http://localhost:4203/remoteEntry.js',
+                exposedModule: './AnalyticsReportComponent'
+            }).then(m => {
+                // O componente pode ter um nome diferente no MFE
+                return m.AppFunctionalComponent || m.AppComponent;
+            })
     },
 ];

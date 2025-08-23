@@ -3,17 +3,29 @@
     max-width: 800px;
     margin: 0 auto;
     
-    mat-card {
-        margin-top: 20px;
-   
-        ul {
-            margin-top: 20px;
-            margin-bottom: 20px;
+    .card {
+        h2 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
         }
         
-        li {
-            margin-bottom: 10px;
+        .card-content {
+            p {
+                margin-bottom: 1rem;
+                line-height: 1.5;
+            }
+            
+            ul {
+                margin: 1.5rem 0;
+                padding-left: 1.5rem;
+            }
+            
+            li {
+                margin-bottom: 0.75rem;
+                position: relative;
+            }
         }
     }
-    
 }
