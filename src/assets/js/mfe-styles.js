@@ -47,6 +47,39 @@
     document.documentElement.style.setProperty('--surface-900', '#212529');
     document.documentElement.style.setProperty('--surface-950', '#0f1315');
     
+    // Variáveis para prioridades
+    document.documentElement.style.setProperty('--priority-highest', '#d32f2f');
+    document.documentElement.style.setProperty('--priority-high', '#f44336');
+    document.documentElement.style.setProperty('--priority-medium', '#ff9800');
+    document.documentElement.style.setProperty('--priority-low', '#4caf50');
+    
     console.log('MFE CSS variables set successfully');
+    
+    // Para o Kanban Board, vamos garantir que os estilos sejam aplicados
+    const kanbanBoard = document.querySelector('app-kanban-board');
+    if (kanbanBoard) {
+      console.log('Applying specific styles to KanbanBoard component');
+      
+      // Aplicar estilos diretamente no componente kanban
+      setTimeout(() => {
+        const priorityElements = kanbanBoard.querySelectorAll('.priority');
+        if (priorityElements.length > 0) {
+          console.log('Found priority elements:', priorityElements.length);
+          priorityElements.forEach(el => {
+            const className = el.className;
+            if (className.includes('priority-')) {
+              console.log('Applied priority styles to:', className);
+            }
+          });
+        } else {
+          console.log('No priority elements found yet, will try again');
+          // Tentar novamente após um breve delay
+          setTimeout(() => {
+            const retryElements = kanbanBoard.querySelectorAll('.priority');
+            console.log('Retry found priority elements:', retryElements.length);
+          }, 1000);
+        }
+      }, 500);
+    }
   }
 })();

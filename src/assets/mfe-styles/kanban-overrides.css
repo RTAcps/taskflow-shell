@@ -1,0 +1,56 @@
+/* Estilos específicos para o componente KanbanBoard quando carregado no shell */
+
+app-kanban-board .priority-urgent,
+app-kanban-board .priority-highest {
+    background-color: var(--priority-highest, #d32f2f) !important;
+    color: white !important;
+}
+
+app-kanban-board .priority-high {
+    background-color: var(--priority-high, #f44336) !important;
+    color: white !important;
+}
+
+app-kanban-board .priority-medium {
+    background-color: var(--priority-medium, #ff9800) !important;
+    color: #000 !important;
+}
+
+app-kanban-board .priority-low {
+    background-color: var(--priority-low, #4caf50) !important;
+    color: white !important;
+}
+
+/* Estilos adicionais para garantir que o componente se integre bem com o shell */
+app-kanban-board {
+    display: block;
+    width: 100%;
+}
+
+app-kanban-board .kanban-board {
+    padding: 20px;
+}
+
+app-kanban-board .task-card {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 12px;
+    position: relative;
+    cursor: move;
+    transition: box-shadow 200ms ease, transform 200ms ease;
+}
+
+app-kanban-board .task-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-top: 8px;
+}
+
+app-kanban-board .priority {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+}

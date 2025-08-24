@@ -27,6 +27,11 @@
   --surface-800: #343a40;
   --surface-900: #212529;
   --surface-950: #0f1315;
+
+  --priority-highest: #d32f2f;
+  --priority-high: #f44336;
+  --priority-medium: #ff9800;
+  --priority-low: #4caf50;
 }
 
 /* Estilos compartilhados para ProjectList */
@@ -134,6 +139,27 @@
   border-radius: 0.25rem;
   background: #ffeb3b;
   font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.priority-urgent {
+  background-color: var(--priority-highest);
+  color: white;
+}
+
+.priority-high {
+  background-color: var(--priority-high);
+  color: white;
+}
+
+.priority-medium {
+  background-color: var(--priority-medium);
+  color: #000;
+}
+
+.priority-low {
+  background-color: var(--priority-low);
+  color: white;
 }
 
 .assignee {
