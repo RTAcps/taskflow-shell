@@ -57,7 +57,7 @@ export const routes: Routes = [
                 remoteEntry: 'http://localhost:4202/remoteEntry.js',
                 exposedModule: './RealTimeCollaborationComponent'
             }).then(m => {
-                return m.ReactiveRootComponent || m.AppComponent;
+                return m.RealtimeCollaborationComponent;
             })
     },
     {
