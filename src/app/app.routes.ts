@@ -62,13 +62,6 @@ export const routes: Routes = [
     },
     {
         path: 'analytics-report',
-        loadComponent: () => 
-            loadRemoteModule({
-                type: 'module',
-                remoteEntry: 'http://localhost:4203/remoteEntry.js',
-                exposedModule: './AnalyticsReportComponent'
-            }).then(m => {
-                return m.AppFunctionalComponent || m.AppComponent;
-            })
+        loadComponent: () => import('./analytics-report-wrapper.component').then(m => m.AnalyticsReportWrapperComponent)
     },
 ];
