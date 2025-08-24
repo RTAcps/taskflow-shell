@@ -10,12 +10,44 @@ export const routes: Routes = [
     },
     {
         path: 'project-management',
-        loadChildren: () => 
-            loadRemoteModule({
-                type: 'module',
-                remoteEntry: 'http://localhost:4201/remoteEntry.js',
-                exposedModule: './Routes'
-            }).then(m => m.routes)
+        children: [
+            {
+                path: '',
+                loadComponent: () => 
+                    loadRemoteModule({
+                        type: 'module',
+                        remoteEntry: 'http://localhost:4201/remoteEntry.js',
+                        exposedModule: './ProjectListComponent'
+                    }).then(m => m.ProjectListComponent)
+            },
+            {
+                path: 'projects/new',
+                loadComponent: () => 
+                    loadRemoteModule({
+                        type: 'module',
+                        remoteEntry: 'http://localhost:4201/remoteEntry.js',
+                        exposedModule: './ProjectFormComponent'
+                    }).then(m => m.ProjectFormComponent)
+            },
+            {
+                path: 'projects/edit/:id',
+                loadComponent: () => 
+                    loadRemoteModule({
+                        type: 'module',
+                        remoteEntry: 'http://localhost:4201/remoteEntry.js',
+                        exposedModule: './ProjectFormComponent'
+                    }).then(m => m.ProjectFormComponent)
+            },
+            {
+                path: 'projects/:id/board',
+                loadComponent: () => 
+                    loadRemoteModule({
+                        type: 'module',
+                        remoteEntry: 'http://localhost:4201/remoteEntry.js',
+                        exposedModule: './KanbanBoardComponent'
+                    }).then(m => m.KanbanBoardComponent)
+            }
+        ]
     },
     {
         path: 'real-time-collaboration',

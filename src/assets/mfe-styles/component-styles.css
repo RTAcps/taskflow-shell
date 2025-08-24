@@ -1,0 +1,198 @@
+/* Componentes do MFE - estilos compartilhados */
+
+:root {
+  /* Primary colors */
+  --primary-50: #f5f9ff;
+  --primary-100: #d0e1fd;
+  --primary-200: #abc9fb;
+  --primary-300: #86b0f9;
+  --primary-400: #6198f7;
+  --primary-500: #3B82F6;
+  --primary-600: #2272f5;
+  --primary-700: #0c61e4;
+  --primary-800: #0a52c2;
+  --primary-900: #08429f;
+  --primary-950: #072e6f;
+
+  /* Surface colors */
+  --surface-0: #ffffff;
+  --surface-50: #F8F9FA;
+  --surface-100: #f2f4f6;
+  --surface-200: #e9ecef;
+  --surface-300: #dee2e6;
+  --surface-400: #ced4da;
+  --surface-500: #adb5bd;
+  --surface-600: #6c757d;
+  --surface-700: #495057;
+  --surface-800: #343a40;
+  --surface-900: #212529;
+  --surface-950: #0f1315;
+}
+
+/* Estilos compartilhados para ProjectList */
+.project-list {
+  padding: 1.25rem;
+}
+
+.project-list h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: var(--primary-700);
+}
+
+.project-card {
+  background: var(--surface-0);
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: box-shadow 0.2s;
+}
+
+.project-card:hover {
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* Estilos para KanbanBoard */
+.kanban-board {
+  padding: 1.25rem;
+}
+
+.kanban-board h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+}
+
+.header-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.back-button {
+  background-color: var(--primary-500);
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  padding: 0.5rem 1rem;
+  margin-right: 1rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.back-button:hover {
+  background-color: var(--primary-600);
+}
+
+.kanban-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.25rem;
+}
+
+.kanban-column {
+  background: var(--surface-100);
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.kanban-column h3 {
+  margin: 0 0 1rem 0;
+  padding: 0.5rem;
+  background: var(--surface-200);
+  border-radius: 0.25rem;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.task-card {
+  background: white;
+  border: 1px solid var(--surface-300);
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.task-card h4 {
+  margin-top: 0;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.task-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.priority {
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  background: #ffeb3b;
+  font-size: 0.75rem;
+}
+
+.assignee {
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+
+/* Estilos para botões */
+button {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s, opacity 0.2s;
+}
+
+button.primary {
+  background-color: var(--primary-500);
+  color: white;
+  border: none;
+}
+
+button.primary:hover {
+  background-color: var(--primary-600);
+}
+
+button.secondary {
+  background-color: var(--surface-200);
+  color: var(--surface-900);
+  border: none;
+}
+
+button.secondary:hover {
+  background-color: var(--surface-300);
+}
+
+/* Estilos para formulários */
+input, select, textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--surface-300);
+  border-radius: 0.25rem;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}

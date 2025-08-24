@@ -4,6 +4,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import MFE component styles */
+@import 'assets/mfe-styles/component-styles.css';
+@import 'assets/mfe-styles/component-overrides.css';
+@import 'assets/mfe-styles/tailwind-shim.css';
+
 // Custom theme setup
 @include mat.core();
 

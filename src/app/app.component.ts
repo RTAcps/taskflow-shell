@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Router, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { LoadingService } from './core/services/loading.service';
+import { MfeEventService } from './core/services/mfe-event.service';
 import { MainLayoutComponent } from './layout/main-layout.component';
 import { LoadingComponent } from './shared/loading/loading.component';
 
@@ -22,7 +23,8 @@ export class AppComponent implements OnInit, OnDestroy {
 
   constructor(
     private router: Router,
-    private loadingService: LoadingService
+    private loadingService: LoadingService,
+    private mfeEventService: MfeEventService // Injetar o serviço para inicializá-lo
   ) {}
 
   ngOnInit() {
