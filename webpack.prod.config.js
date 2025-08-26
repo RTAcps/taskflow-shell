@@ -1,1 +1,12 @@
-module.exports = require('./webpack.config');
+const { shareAll, withModuleFederationPlugin } = require('@angular-architects/module-federation/webpack');
+
+module.exports = withModuleFederationPlugin({
+  remotes: {
+    "taskflow-component": "taskflow-component@https://taskflow-component.netlify.app/remoteEntry.js",
+    "taskflow-reactive": "taskflow-reactive@https://taskflow-reactive.netlify.app/remoteEntry.js",
+    "taskflow-functional": "taskflow-functional@https://taskflow-functional.netlify.app/remoteEntry.js",
+  },
+  shared: {
+    ...shareAll({ singleton: true, strictVersion: true, requiredVersion: 'auto' }),
+  },
+});
