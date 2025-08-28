@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { HomeComponent } from './home/home.component';
 import { loadRemoteModule } from '@angular-architects/module-federation';
+import { environment } from '../environments/environment';
 
 export const routes: Routes = [
     {
@@ -16,7 +17,7 @@ export const routes: Routes = [
                 loadComponent: () => 
                     loadRemoteModule({
                         type: 'module',
-                        remoteEntry: 'http://localhost:4201/remoteEntry.js',
+                        remoteEntry: environment.remoteUrls['taskflow-component'],
                         exposedModule: './ProjectListComponent'
                     }).then(m => m.ProjectListComponent)
             },
@@ -25,7 +26,7 @@ export const routes: Routes = [
                 loadComponent: () => 
                     loadRemoteModule({
                         type: 'module',
-                        remoteEntry: 'http://localhost:4201/remoteEntry.js',
+                        remoteEntry: environment.remoteUrls['taskflow-component'],
                         exposedModule: './ProjectFormComponent'
                     }).then(m => m.ProjectFormComponent)
             },
@@ -34,7 +35,7 @@ export const routes: Routes = [
                 loadComponent: () => 
                     loadRemoteModule({
                         type: 'module',
-                        remoteEntry: 'http://localhost:4201/remoteEntry.js',
+                        remoteEntry: environment.remoteUrls['taskflow-component'],
                         exposedModule: './ProjectFormComponent'
                     }).then(m => m.ProjectFormComponent)
             },
@@ -43,7 +44,7 @@ export const routes: Routes = [
                 loadComponent: () => 
                     loadRemoteModule({
                         type: 'module',
-                        remoteEntry: 'http://localhost:4201/remoteEntry.js',
+                        remoteEntry: environment.remoteUrls['taskflow-component'],
                         exposedModule: './KanbanBoardComponent'
                     }).then(m => m.KanbanBoardComponent)
             }
@@ -54,7 +55,7 @@ export const routes: Routes = [
         loadComponent: () => 
             loadRemoteModule({
                 type: 'module',
-                remoteEntry: 'http://localhost:4202/remoteEntry.js',
+                remoteEntry: environment.remoteUrls['taskflow-reactive'],
                 exposedModule: './RealTimeCollaborationComponent'
             }).then(m => {
                 return m.RealtimeCollaborationComponent;

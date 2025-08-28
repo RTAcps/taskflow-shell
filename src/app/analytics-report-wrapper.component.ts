@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { loadRemoteModule } from '@angular-architects/module-federation';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { environment } from '../environments/environment';
 
 @Component({
   selector: 'app-analytics-report-wrapper',
@@ -39,7 +40,7 @@ export class AnalyticsReportWrapperComponent {
     try {
       const module = await loadRemoteModule({
         type: 'module',
-        remoteEntry: 'http://localhost:4203/remoteEntry.js',
+        remoteEntry: environment.remoteUrls['taskflow-functional'],
         exposedModule: './AnalyticsReportComponent'
       });
       

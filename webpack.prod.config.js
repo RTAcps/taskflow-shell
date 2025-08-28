@@ -1,6 +1,7 @@
 const { shareAll, withModuleFederationPlugin } = require('@angular-architects/module-federation/webpack');
 
 module.exports = withModuleFederationPlugin({
+  name: 'taskflow-shell',
   remotes: {
     "taskflow-component": "taskflow-component@https://taskflow-component.netlify.app/remoteEntry.js",
     "taskflow-reactive": "taskflow-reactive@https://taskflow-reactive.netlify.app/remoteEntry.js",
