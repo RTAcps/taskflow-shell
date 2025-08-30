@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 
 @Component({
   selector: 'app-module-unavailable',
@@ -17,7 +17,8 @@ import { RouterModule } from '@angular/router';
         <p>Estamos trabalhando para restaurar o acesso o mais breve possível.</p>
         <p>Por favor, tente novamente mais tarde ou retorne à página inicial.</p>
         <div class="actions">
-          <button class="btn-primary" routerLink="/">Voltar para a Home</button>
+          <button class="btn-primary" (click)="goHome()" type="button">Voltar para a Home</button>
+          <button class="btn-secondary" (click)="tryReload()" type="button">Tentar Novamente</button>
         </div>
       </div>
     </div>
@@ -62,25 +63,59 @@ import { RouterModule } from '@angular/router';
     .actions {
       display: flex;
       justify-content: center;
+      gap: 1rem;
       margin-top: 2rem;
+      flex-wrap: wrap;
     }
-    .btn-primary {
-      background: var(--primary-color, #3B82F6);
-      color: #ffffff;
+    .btn-primary, .btn-secondary {
       border: none;
       padding: 0.75rem 1.5rem;
       border-radius: 6px;
       font-weight: 600;
       cursor: pointer;
       transition: background-color 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-primary {
+      background: var(--primary-color, #3B82F6);
+      color: #ffffff;
     }
     .btn-primary:hover {
       background: var(--primary-600, #2563EB);
     }
+    .btn-secondary {
+      background: var(--surface-200, #e5e7eb);
+      color: var(--text-color, #333333);
+    }
+    .btn-secondary:hover {
+      background: var(--surface-300, #d1d5db);
+    }
   `]
 })
-export class ModuleUnavailableComponent {
-  constructor() { }
+export class ModuleUnavailableComponent implements OnInit {
+  
+  constructor(private router: Router) { }
+  
+  ngOnInit(): void {
+    console.log('📍 ModuleUnavailableComponent loaded for path:', window.location.pathname);
+  }
+  
+  /**
+   * Navigate to home page
+   */
+  goHome(): void {
+    console.log('🏠 Navigating to home');
+    this.router.navigate(['/']);
+  }
+  
+  /**
+   * Reload the current page
+   */
+  tryReload(): void {
+    console.log('🔄 Reloading page');
+    window.location.reload();
+  }
   
   /**
    * Get a user-friendly name for the module based on the current route

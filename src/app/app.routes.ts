@@ -2,40 +2,52 @@ import { loadRemoteModule } from '@angular-architects/module-federation';
 import { Routes } from '@angular/router';
 import { environment } from '../environments/environment';
 import { HomeComponent } from './home/home.component';
+import { ModuleUnavailableComponent } from './shared/module-unavailable/module-unavailable.component';
 
 /**
  * Load a remote component of the MFEs
- * Fail clearly if unable to load — no fallbacks or simulations
+ * Returns ModuleUnavailableComponent if unable to load
  */
 const loadRemoteComponent = (
   remoteName: 'taskflow-component' | 'taskflow-reactive' | 'taskflow-functional', 
   exposedModule: string
 ) => {
   return () => {
+    console.log(`🔄 Attempting to load ${remoteName} -> ${exposedModule}`);
+    console.log(`📍 Remote URL: ${environment.remoteUrls[remoteName]}`);
+    
     return loadRemoteModule({
       type: 'module',
       remoteEntry: environment.remoteUrls[remoteName],
       exposedModule: exposedModule
     })
     .then(m => {
+      console.log(`✅ Module loaded for ${remoteName}:`, Object.keys(m));
+      
       const component = findComponentInModule(m, exposedModule);
       if (component) {
         if (typeof component === 'function') {
+          console.log(`✅ Component found and validated for ${remoteName} -> ${exposedModule}`);
           return component;
         }
         
-        throw new Error(`❌ Export encontrado mas não é um componente válido: ${typeof component}`);
+        console.error(`❌ Export encontrado mas não é um componente válido: ${typeof component}`);
+        return ModuleUnavailableComponent;
       }
       
-      throw new Error(`❌ Nenhum componente encontrado no módulo ${exposedModule}`);
+      console.error(`❌ Nenhum componente encontrado no módulo ${exposedModule}`);
+      return ModuleUnavailableComponent;
     })
     .catch(err => {
+      console.error(`❌ Erro ao carregar ${remoteName} -> ${exposedModule}:`, err);
+      
       if (err.message && err.message.includes('CORS')) {
         console.error(`🔧 DICA: Este erro de CORS indica que o MFE ${remoteName} está configurado para aceitar apenas o domínio de produção.`);
         console.error(`🔧 Para desenvolvimento local, o MFE precisa permitir 'http://localhost:4200' nas configurações de CORS.`);
       }
       
-      return createErrorComponent(remoteName, exposedModule, err);
+      // SEMPRE retorna um componente válido, nunca null
+      return ModuleUnavailableComponent;
     });
   };
 };
@@ -44,10 +56,15 @@ const loadRemoteComponent = (
  * Helper function to find a component from a module
  */
 function findComponentInModule(module: any, exposedModule: string): any {
+  console.log(`🔍 Searching for component in module:`, Object.keys(module));
+  
+  // First try the default export
   if (module.default && typeof module.default === 'function') {
+    console.log(`✅ Found default export`);
     return module.default;
   }
   
+  // Then try specific names based on exposed module
   const specificNames = {
     './ProjectListComponent': ['ProjectListComponent'],
     './KanbanBoardComponent': ['KanbanBoardComponent'],
@@ -60,79 +77,34 @@ function findComponentInModule(module: any, exposedModule: string): any {
   if (specificNames[exposedModule as keyof typeof specificNames]) {
     for (const name of specificNames[exposedModule as keyof typeof specificNames]) {
       if (module[name] && typeof module[name] === 'function') {
+        console.log(`✅ Found specific component: ${name}`);
         return module[name];
       }
     }
   }
   
+  // Try to find any component export
   const componentExport = Object.keys(module).find(key => 
     key.endsWith('Component') && typeof module[key] === 'function'
   );
   
   if (componentExport) {
+    console.log(`✅ Found component export: ${componentExport}`);
     return module[componentExport];
   }
   
+  // Last resort: any function export
   const functionExport = Object.keys(module).find(key => 
     typeof module[key] === 'function'
   );
   
   if (functionExport) {
+    console.log(`✅ Found function export: ${functionExport}`);
     return module[functionExport];
   }
   
+  console.log(`❌ No valid component found in module`);
   return null;
-}
-
-/**
- * Creates an error component when the MFE fails to load
- */
-function createErrorComponent(remoteName: string, exposedModule: string, error: any) {
-  const remoteUrls: any = environment.remoteUrls;
-  const isCorsError = error.message && (
-    error.message.includes('CORS') || 
-    error.message.includes('blocked') ||
-    error.message.includes('Access-Control-Allow-Origin')
-  );
-  
-  return () => {
-    return {
-      template: `
-        <div style="padding: 2rem; background: #fee2e2; border: 1px solid #fca5a5; border-radius: 8px; margin: 1rem;">
-          <h2 style="color: #dc2626; margin-top: 0;">❌ Erro ao carregar MFE</h2>
-          <p><strong>MFE:</strong> ${remoteName}</p>
-          <p><strong>Módulo:</strong> ${exposedModule}</p>
-          <p><strong>URL:</strong> ${remoteUrls[remoteName]}</p>
-          
-          ${isCorsError ? `
-          <div style="background: #fef3c7; border: 1px solid #fbbf24; padding: 1rem; border-radius: 4px; margin: 1rem 0;">
-            <h3 style="color: #92400e; margin-top: 0;">🔧 Problema de CORS Detectado</h3>
-            <p style="color: #92400e; margin-bottom: 0;">
-              O MFE está configurado para aceitar apenas requisições do domínio de produção.<br>
-              Para desenvolvimento local, o MFE precisa permitir <code>http://localhost:4200</code> nas configurações de CORS.
-            </p>
-          </div>
-          ` : ''}
-          
-          <details style="margin-top: 1rem;">
-            <summary style="cursor: pointer; font-weight: bold;">Ver detalhes do erro</summary>
-            <pre style="background: #fef2f2; padding: 1rem; border-radius: 4px; overflow: auto; white-space: pre-wrap;">${error.message || error}</pre>
-          </details>
-          
-          <div style="margin-top: 1rem; padding: 1rem; background: #f3f4f6; border-radius: 4px;">
-            <h4 style="margin-top: 0;">🔍 Possíveis soluções:</h4>
-            <ul style="margin-bottom: 0;">
-              <li>Verificar se o MFE está rodando e acessível</li>
-              <li>Configurar CORS no MFE para aceitar localhost:4200</li>
-              <li>Verificar se o módulo ${exposedModule} está sendo exposto corretamente</li>
-              <li>Testar a URL diretamente no navegador: <a href="${remoteUrls[remoteName]}" target="_blank">${remoteUrls[remoteName]}</a></li>
-            </ul>
-          </div>
-        </div>
-      `,
-      standalone: true
-    };
-  };
 }
 
 export const routes: Routes = [

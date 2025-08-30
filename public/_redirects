@@ -1,1 +1,18 @@
-/* /index.html 200
+# Redirects for TaskFlow Shell
+
+# Handle Angular routing - redirect all non-asset requests to index.html
+/*    /index.html   200
+
+# Specific redirects for assets to prevent 404s
+/assets/*   /assets/:splat   200
+/js/*       /assets/js/:splat   200
+/css/*      /assets/css/:splat   200
+
+# Handle API routes if needed
+/api/*      /api/:splat   200
+
+# Ensure proper MIME types for JS files
+/remoteEntry.js    /remoteEntry.js    200
+*.js        *.js    200
+*.css       *.css   200
+*.json      *.json  200
