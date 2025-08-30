@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow Shell - Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .warning { color: #ffc107; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .log { 
+            background: #f8f9fa; 
+            border: 1px solid #dee2e6; 
+            border-radius: 4px; 
+            padding: 10px; 
+            font-family: monospace; 
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 TaskFlow Shell - Teste de Deploy</h1>
+    
+    <div class="test-section">
+        <h2>🔗 Links de Teste</h2>
+        <p>Use estes links para testar diferentes aspectos da aplicação:</p>
+        <div style="margin: 15px 0;">
+            <a href="/test-mfe.html" style="
+                display: inline-block; 
+                background: #6366F1; 
+                color: white; 
+                text-decoration: none; 
+                padding: 12px 24px; 
+                border-radius: 8px; 
+                margin: 5px;
+                transition: all 0.2s;
+            " onmouseover="this.style.background='#4F46E5'" onmouseout="this.style.background='#6366F1'">
+                🔧 Teste Module Federation
+            </a>
+            <a href="/" style="
+                display: inline-block; 
+                background: #10B981; 
+                color: white; 
+                text-decoration: none; 
+                padding: 12px 24px; 
+                border-radius: 8px; 
+                margin: 5px;
+                transition: all 0.2s;
+            " onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10B981'">
+                🏠 Aplicação Principal
+            </a>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📋 Testes de Recursos</h2>
+        <button onclick="testStaticFiles()">Testar Arquivos Estáticos</button>
+        <button onclick="testMFEUrls()">Testar URLs dos MFEs</button>
+        <button onclick="testModuleFederation()">Testar Module Federation</button>
+        <button onclick="clearLog()">Limpar Log</button>
+        
+        <div id="log" class="log"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔗 Links para MFEs</h2>
+        <ul>
+            <li><a href="https://taskflow-component.netlify.app/remoteEntry.js" target="_blank" rel="noopener noreferrer">TaskFlow Component</a></li>
+            <li><a href="https://taskflow-reactive.netlify.app/remoteEntry.js" target="_blank" rel="noopener noreferrer">TaskFlow Reactive</a></li>
+            <li><a href="https://taskflow-functional.netlify.app/remoteEntry.js" target="_blank" rel="noopener noreferrer">TaskFlow Functional</a></li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Estado Atual</h2>
+        <p id="current-url"></p>
+        <p id="user-agent"></p>
+        <p id="timestamp"></p>
+    </div>
+
+    <script>
+        const log = document.getElementById('log');
+        
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'warning';
+            log.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function clearLog() {
+            log.innerHTML = '';
+        }
+        
+        async function testStaticFiles() {
+            addLog('🧪 Testando arquivos estáticos...');
+            
+            const files = [
+                './assets/js/mfe-styles.js',
+                './favicon.ico'
+            ];
+            
+            for (const file of files) {
+                try {
+                    const response = await fetch(file);
+                    if (response.ok) {
+                        const content = await response.text();
+                        if (file.endsWith('.js') && content.includes('<')) {
+                            addLog(`❌ ${file}: Arquivo JS contém HTML! (Erro de MIME type)`, 'error');
+                        } else {
+                            addLog(`✅ ${file}: OK (${response.status})`, 'success');
+                        }
+                    } else {
+                        addLog(`❌ ${file}: ${response.status} ${response.statusText}`, 'error');
+                    }
+                } catch (error) {
+                    addLog(`❌ ${file}: ${error.message}`, 'error');
+                }
+            }
+        }
+        
+        async function testMFEUrls() {
+            addLog('🧪 Testando URLs dos MFEs...');
+            
+            const mfeUrls = [
+                'https://taskflow-component.netlify.app/remoteEntry.js',
+                'https://taskflow-reactive.netlify.app/remoteEntry.js',
+                'https://taskflow-functional.netlify.app/remoteEntry.js'
+            ];
+            
+            for (const url of mfeUrls) {
+                try {
+                    const response = await fetch(url, { mode: 'no-cors' });
+                    addLog(`⚠️ ${url}: Testado (CORS impede verificação completa)`, 'warning');
+                } catch (error) {
+                    addLog(`❌ ${url}: ${error.message}`, 'error');
+                }
+            }
+        }
+        
+        async function testModuleFederation() {
+            addLog('🧪 Testando Module Federation...');
+            
+            if (typeof window.webpackChunkLoad !== 'undefined') {
+                addLog('✅ Webpack chunks loader detectado', 'success');
+            } else {
+                addLog('❌ Webpack chunks loader não encontrado', 'error');
+            }
+            
+            if (typeof window.__webpack_require__ !== 'undefined') {
+                addLog('✅ Webpack require detectado', 'success');
+            } else {
+                addLog('❌ Webpack require não encontrado', 'error');
+            }
+            
+            // Test if Module Federation container is available
+            try {
+                if (window.taskflowShell) {
+                    addLog('✅ TaskFlow Shell container encontrado', 'success');
+                } else {
+                    addLog('❌ TaskFlow Shell container não encontrado', 'error');
+                }
+            } catch (error) {
+                addLog(`❌ Erro ao verificar container: ${error.message}`, 'error');
+            }
+        }
+        
+        // Initialize page info
+        document.getElementById('current-url').textContent = `URL Atual: ${window.location.href}`;
+        document.getElementById('user-agent').textContent = `User Agent: ${navigator.userAgent}`;
+        document.getElementById('timestamp').textContent = `Timestamp: ${new Date().toLocaleString()}`;
+        
+        // Auto-run basic tests
+        addLog('🚀 Página de teste carregada');
+        addLog('ℹ️ Clique nos botões acima para executar os testes');
+    </script>
+</body>
+</html>

@@ -2,24 +2,56 @@ import { bootstrapApplication } from '@angular/platform-browser';
 import { appConfig } from './app/app.config';
 import { AppComponent } from './app/app.component';
 
-// Global error handlers for unhandled errors
+/**
+ * Verificar se o ambiente de Module Federation está funcionando
+ */
+function checkModuleFederationEnvironment() {
+  console.log('🔧 Checking Module Federation environment...');
+  
+  if (typeof (window as any).__webpack_require__ === 'undefined') {
+    console.warn('⚠️ __webpack_require__ not available - Module Federation may have issues');
+  } else {
+    console.log('✅ __webpack_require__ is available');
+  }
+  
+  if (typeof (window as any).webpackChunkName === 'undefined') {
+    console.log('ℹ️ webpackChunkName not defined (normal for shell app)');
+  }
+  
+  console.log('🔧 Module Federation environment check completed');
+}
+
 window.addEventListener('error', (event) => {
   console.error('🚨 Global Window Error:', event.error);
-  event.preventDefault(); 
+  
+  if (event.error?.message?.includes('is not a function') || 
+      event.error?.message?.includes('Loading script failed') ||
+      event.error?.message?.includes('get is not a function') ||
+      event.error?.message?.includes('init is not a function')) {
+    console.error('🔧 Module Federation Error detected in window handler');
+    event.preventDefault(); 
+  }
 });
 
 window.addEventListener('unhandledrejection', (event) => {
   console.error('🚨 Unhandled Promise Rejection:', event.reason);
-  event.preventDefault(); 
+  
+  if (event.reason?.message?.includes('Loading script failed') ||
+      event.reason?.message?.includes('is not a function') ||
+      event.reason?.message?.includes('get is not a function') ||
+      event.reason?.message?.includes('init is not a function')) {
+    console.error('🔧 Module Federation Error detected in promise handler');
+    event.preventDefault(); 
+  }
 });
 
-// Initialize the application
+checkModuleFederationEnvironment();
+
 const initApp = () => {
   bootstrapApplication(AppComponent, appConfig)
     .catch(err => {
       console.error('❌ Error bootstrapping app:', err);
       
-      // Try to show a user-friendly error message
       const errorDiv = document.createElement('div');
       errorDiv.innerHTML = `
         <div style="
@@ -50,5 +82,4 @@ const initApp = () => {
     });
 };
 
-// Start the application
 initApp();

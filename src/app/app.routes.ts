@@ -1,8 +1,8 @@
-import { loadRemoteModule } from '@angular-architects/module-federation';
 import { Routes } from '@angular/router';
 import { environment } from '../environments/environment';
 import { HomeComponent } from './home/home.component';
 import { ModuleUnavailableComponent } from './shared/module-unavailable/module-unavailable.component';
+import { ModuleFederationHelper } from './core/utils/module-federation-helper';
 
 /**
  * Load a remote component of the MFEs
@@ -16,12 +16,14 @@ const loadRemoteComponent = (
     console.log(`🔄 Attempting to load ${remoteName} -> ${exposedModule}`);
     console.log(`📍 Remote URL: ${environment.remoteUrls[remoteName]}`);
     
-    return loadRemoteModule({
-      type: 'module',
+    return ModuleFederationHelper.loadRemoteModuleWithRetry({
       remoteEntry: environment.remoteUrls[remoteName],
-      exposedModule: exposedModule
+      exposedModule: exposedModule,
+      remoteName: remoteName,
+      maxRetries: 3,
+      retryDelay: 1000
     })
-    .then(m => {
+    .then((m: any) => {
       console.log(`✅ Module loaded for ${remoteName}:`, Object.keys(m));
       
       const component = findComponentInModule(m, exposedModule);
@@ -38,15 +40,14 @@ const loadRemoteComponent = (
       console.error(`❌ Nenhum componente encontrado no módulo ${exposedModule}`);
       return ModuleUnavailableComponent;
     })
-    .catch(err => {
+    .catch((err: any) => {
       console.error(`❌ Erro ao carregar ${remoteName} -> ${exposedModule}:`, err);
       
-      if (err.message && err.message.includes('CORS')) {
+      if (err?.message?.includes('CORS')) {
         console.error(`🔧 DICA: Este erro de CORS indica que o MFE ${remoteName} está configurado para aceitar apenas o domínio de produção.`);
         console.error(`🔧 Para desenvolvimento local, o MFE precisa permitir 'http://localhost:4200' nas configurações de CORS.`);
       }
       
-      // SEMPRE retorna um componente válido, nunca null
       return ModuleUnavailableComponent;
     });
   };
@@ -58,13 +59,11 @@ const loadRemoteComponent = (
 function findComponentInModule(module: any, exposedModule: string): any {
   console.log(`🔍 Searching for component in module:`, Object.keys(module));
   
-  // First try the default export
   if (module.default && typeof module.default === 'function') {
     console.log(`✅ Found default export`);
     return module.default;
   }
   
-  // Then try specific names based on exposed module
   const specificNames = {
     './ProjectListComponent': ['ProjectListComponent'],
     './KanbanBoardComponent': ['KanbanBoardComponent'],
@@ -83,7 +82,6 @@ function findComponentInModule(module: any, exposedModule: string): any {
     }
   }
   
-  // Try to find any component export
   const componentExport = Object.keys(module).find(key => 
     key.endsWith('Component') && typeof module[key] === 'function'
   );
@@ -93,7 +91,6 @@ function findComponentInModule(module: any, exposedModule: string): any {
     return module[componentExport];
   }
   
-  // Last resort: any function export
   const functionExport = Object.keys(module).find(key => 
     typeof module[key] === 'function'
   );
