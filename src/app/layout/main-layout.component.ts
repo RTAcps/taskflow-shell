@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { Component, Renderer2, effect, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -9,6 +9,7 @@ import { LayoutService } from './service/layout.service';
   standalone: true,
   imports: [
     CommonModule,
+    NgOptimizedImage,
     RouterOutlet
   ],
   templateUrl: './main-layout.component.html',
@@ -19,6 +20,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   menuOutsideClickListener: any;
   windowResizeListener: Function | null = null;
   hasProfile = false;
+  logoUrl = 'assets/images/logo.png';
 
   get containerClass(): { [key: string]: boolean } {
     return {
@@ -52,7 +54,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         });
       }
     });
-    
+   
     // Apply theme class on initialization
     this.applyThemeClass();
     
