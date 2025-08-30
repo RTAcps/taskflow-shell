@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { environment } from '../environments/environment';
 import { NotificationService } from './core/services/notification.service';
+import { ModuleFederationService } from './core/services/module-federation.service';
 
 @Component({
   selector: 'app-analytics-report-wrapper',
@@ -34,7 +35,10 @@ export class AnalyticsReportWrapperComponent implements OnInit {
   private retryCount = 0;
   private readonly maxRetries = 2;
 
-  constructor(private readonly notificationService: NotificationService) { }
+  constructor(
+    private readonly notificationService: NotificationService,
+    private readonly moduleFederationService: ModuleFederationService
+  ) { }
   
   ngOnInit(): void {
     this.loadAnalyticsComponent();
@@ -49,7 +53,30 @@ export class AnalyticsReportWrapperComponent implements OnInit {
         exposedModule: './AnalyticsReportComponent'
       });
       
-      this.analyticsComponent = module.AnalyticsReportComponent;
+      // Try to find the component by different strategies
+      let component = null;
+      
+      // 1. Try direct access to the named export
+      if (module.AnalyticsReportComponent) {
+        component = module.AnalyticsReportComponent;
+      } 
+      // 2. Try to find a component by naming convention
+      else {
+        const componentKey = Object.keys(module).find(key => 
+          typeof module[key] === 'function' && 
+          key.endsWith('Component')
+        );
+        
+        if (componentKey) {
+          component = module[componentKey];
+        }
+      }
+      
+      if (component) {
+        this.analyticsComponent = component;
+      } else {
+        throw new Error('Component não encontrado no módulo remoto');
+      }
     } catch (error) {
       console.error('Erro ao carregar componente de análise:', error);
       
