@@ -5,7 +5,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
-    "build:prod": "NODE_ENV=production ng build --configuration production",
+    "build:prod": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "clean": "rm -rf dist node_modules package-lock.json && npm cache clean --force && pnpm install",

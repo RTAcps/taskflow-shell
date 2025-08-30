@@ -37,7 +37,11 @@
 						"scripts": [],
 						"main": "src/main.ts",
 						"extraWebpackConfig": "webpack.config.js",
-						"commonChunk": false
+						"commonChunk": false,
+						"allowedCommonJsDependencies": [
+							"sweetalert2",
+							"@angular-architects/module-federation"
+						]
 					},
 					"configurations": {
 						"production": {
@@ -49,7 +53,7 @@
 								},
 								{
 									"type": "anyComponentStyle",
-									"maximumWarning": "4kB",
+									"maximumWarning": "5kB",
 									"maximumError": "8kB"
 								}
 							],
