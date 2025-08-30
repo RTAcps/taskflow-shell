@@ -1,8 +1,8 @@
-/* Script para injetar estilos para componentes MFE */
+/* Script to inject styles for MFE components */
 (function() {
-  // Esperar até que o DOM esteja pronto
+  'use strict';
+
   document.addEventListener('DOMContentLoaded', function() {
-    // Verificar a cada 100ms se os componentes MFE foram carregados
     const checkInterval = setInterval(function() {
       const projectListComponent = document.querySelector('app-project-list');
       const kanbanBoardComponent = document.querySelector('app-kanban-board');
@@ -15,14 +15,12 @@
       }
     }, 100);
     
-    // Parar de verificar após 10 segundos
     setTimeout(function() {
       clearInterval(checkInterval);
     }, 10000);
   });
   
   function applyMfeStyles() {
-    // Definir variáveis CSS para os componentes MFE
     document.documentElement.style.setProperty('--primary-50', '#f5f9ff');
     document.documentElement.style.setProperty('--primary-100', '#d0e1fd');
     document.documentElement.style.setProperty('--primary-200', '#abc9fb');
@@ -47,7 +45,6 @@
     document.documentElement.style.setProperty('--surface-900', '#212529');
     document.documentElement.style.setProperty('--surface-950', '#0f1315');
     
-    // Variáveis para prioridades
     document.documentElement.style.setProperty('--priority-highest', '#d32f2f');
     document.documentElement.style.setProperty('--priority-high', '#f44336');
     document.documentElement.style.setProperty('--priority-medium', '#ff9800');
@@ -55,12 +52,10 @@
     
     console.log('MFE CSS variables set successfully');
     
-    // Para o Kanban Board, vamos garantir que os estilos sejam aplicados
     const kanbanBoard = document.querySelector('app-kanban-board');
     if (kanbanBoard) {
       console.log('Applying specific styles to KanbanBoard component');
       
-      // Aplicar estilos diretamente no componente kanban
       setTimeout(() => {
         const priorityElements = kanbanBoard.querySelectorAll('.priority');
         if (priorityElements.length > 0) {
@@ -73,7 +68,6 @@
           });
         } else {
           console.log('No priority elements found yet, will try again');
-          // Tentar novamente após um breve delay
           setTimeout(() => {
             const retryElements = kanbanBoard.querySelectorAll('.priority');
             console.log('Retry found priority elements:', retryElements.length);

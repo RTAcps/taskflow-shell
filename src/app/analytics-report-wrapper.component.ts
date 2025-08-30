@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { loadRemoteModule } from '@angular-architects/module-federation';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { environment } from '../environments/environment';
+import { NotificationService } from './core/services/notification.service';
 
 @Component({
   selector: 'app-analytics-report-wrapper',
@@ -27,11 +28,15 @@ import { environment } from '../environments/environment';
     }
   `]
 })
-export class AnalyticsReportWrapperComponent {
+export class AnalyticsReportWrapperComponent implements OnInit {
   analyticsComponent: any;
   report: any;
+  private retryCount = 0;
+  private readonly maxRetries = 2;
 
-  constructor() {
+  constructor(private readonly notificationService: NotificationService) { }
+  
+  ngOnInit(): void {
     this.loadAnalyticsComponent();
     this.loadReportData();
   }
@@ -47,6 +52,20 @@ export class AnalyticsReportWrapperComponent {
       this.analyticsComponent = module.AnalyticsReportComponent;
     } catch (error) {
       console.error('Erro ao carregar componente de análise:', error);
+      
+      // Se atingiu o número máximo de tentativas, mostra o erro e redireciona
+      if (this.retryCount >= this.maxRetries) {
+        this.notificationService.showErrorWithRedirect(
+          'Não foi possível carregar o módulo de análise. Você será redirecionado para a página inicial.',
+          '/home',
+          8000,
+          'Erro ao carregar relatório de análise'
+        );
+      } else {
+        // Tenta novamente
+        this.retryCount++;
+        setTimeout(() => this.loadAnalyticsComponent(), 1500);
+      }
     }
   }
 
@@ -67,7 +86,7 @@ export class AnalyticsReportWrapperComponent {
         completionRate: 60,
         overdueTasksCount: 12,
         tasksByStatus: {
-          0: 45,  // TODO
+          0: 45,  // PENDING
           1: 38,  // IN_PROGRESS
           2: 87,  // DONE
           3: 15,  // REVIEW

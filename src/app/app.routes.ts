@@ -3,6 +3,18 @@ import { HomeComponent } from './home/home.component';
 import { loadRemoteModule } from '@angular-architects/module-federation';
 import { environment } from '../environments/environment';
 
+// Define a helper function for safe remote loading with proper error handling
+const safeLoadRemoteModule = (remoteEntry: string, exposedModule: string) => {
+  return () => loadRemoteModule({
+    type: 'module',
+    remoteEntry: remoteEntry,
+    exposedModule: exposedModule
+  }).catch(err => {
+    console.error(`Failed to load remote module: ${exposedModule}`, err);
+    throw new Error(`Failed to load remote module: ${exposedModule}`);
+  });
+};
+
 export const routes: Routes = [
     {
         path: '',
@@ -15,51 +27,49 @@ export const routes: Routes = [
             {
                 path: '',
                 loadComponent: () => 
-                    loadRemoteModule({
-                        type: 'module',
-                        remoteEntry: environment.remoteUrls['taskflow-component'],
-                        exposedModule: './ProjectListComponent'
-                    }).then(m => m.ProjectListComponent)
+                    safeLoadRemoteModule(
+                        environment.remoteUrls['taskflow-component'],
+                        './ProjectListComponent'
+                    )()
+                    .then(m => m.ProjectListComponent)
             },
             {
                 path: 'projects/new',
                 loadComponent: () => 
-                    loadRemoteModule({
-                        type: 'module',
-                        remoteEntry: environment.remoteUrls['taskflow-component'],
-                        exposedModule: './ProjectFormComponent'
-                    }).then(m => m.ProjectFormComponent)
+                    safeLoadRemoteModule(
+                        environment.remoteUrls['taskflow-component'],
+                        './ProjectFormComponent'
+                    )()
+                    .then(m => m.ProjectFormComponent)
             },
             {
                 path: 'projects/edit/:id',
                 loadComponent: () => 
-                    loadRemoteModule({
-                        type: 'module',
-                        remoteEntry: environment.remoteUrls['taskflow-component'],
-                        exposedModule: './ProjectFormComponent'
-                    }).then(m => m.ProjectFormComponent)
+                    safeLoadRemoteModule(
+                        environment.remoteUrls['taskflow-component'],
+                        './ProjectFormComponent'
+                    )()
+                    .then(m => m.ProjectFormComponent)
             },
             {
                 path: 'projects/:id/board',
                 loadComponent: () => 
-                    loadRemoteModule({
-                        type: 'module',
-                        remoteEntry: environment.remoteUrls['taskflow-component'],
-                        exposedModule: './KanbanBoardComponent'
-                    }).then(m => m.KanbanBoardComponent)
+                    safeLoadRemoteModule(
+                        environment.remoteUrls['taskflow-component'],
+                        './KanbanBoardComponent'
+                    )()
+                    .then(m => m.KanbanBoardComponent)
             }
         ]
     },
     {
         path: 'real-time-collaboration',
         loadComponent: () => 
-            loadRemoteModule({
-                type: 'module',
-                remoteEntry: environment.remoteUrls['taskflow-reactive'],
-                exposedModule: './RealTimeCollaborationComponent'
-            }).then(m => {
-                return m.RealtimeCollaborationComponent;
-            })
+            safeLoadRemoteModule(
+                environment.remoteUrls['taskflow-reactive'],
+                './RealTimeCollaborationComponent'
+            )()
+            .then(m => m.RealtimeCollaborationComponent)
     },
     {
         path: 'analytics-report',
