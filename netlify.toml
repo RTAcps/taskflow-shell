@@ -1,0 +1,8 @@
+[build]
+  publish = "dist/taskflow-shell"
+  command = "pnpm run build:prod"
+  
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
