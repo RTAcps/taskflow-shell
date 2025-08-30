@@ -1,19 +1,20 @@
 import { MfeConfig } from './models/mfe-config.interface';
+import { environment } from '../../environments/environment';
 
 export const MFE_CONFIG: MfeConfig = {
   mfeComponents: {
     projectManagement: {
-      remoteEntry: 'http://localhost:4201/remoteEntry.js',
+      remoteEntry: environment.remoteUrls['taskflow-component'],
       exposedModule: './component',
       componentName: 'ProjectManagementComponent'
     },
     realTimeCollaboration: {
-      remoteEntry: 'http://localhost:4202/remoteEntry.js',
+      remoteEntry: environment.remoteUrls['taskflow-reactive'],
       exposedModule: './component',
       componentName: 'RealTimeCollaborationComponent'
     },
     analyticsReport: {
-      remoteEntry: 'http://localhost:4203/remoteEntry.js',
+      remoteEntry: environment.remoteUrls['taskflow-functional'],
       exposedModule: './component',
       componentName: 'AnalyticsReportComponent'
     }
