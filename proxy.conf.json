@@ -1,0 +1,29 @@
+{
+  "/mfe/*": {
+    "target": "https://taskflow-component.netlify.app",
+    "secure": true,
+    "changeOrigin": true,
+    "logLevel": "debug",
+    "pathRewrite": {
+      "^/mfe/taskflow-component": ""
+    }
+  },
+  "/mfe-reactive/*": {
+    "target": "https://taskflow-reactive.netlify.app", 
+    "secure": true,
+    "changeOrigin": true,
+    "logLevel": "debug",
+    "pathRewrite": {
+      "^/mfe-reactive": ""
+    }
+  },
+  "/mfe-functional/*": {
+    "target": "https://taskflow-functional.netlify.app",
+    "secure": true, 
+    "changeOrigin": true,
+    "logLevel": "debug",
+    "pathRewrite": {
+      "^/mfe-functional": ""
+    }
+  }
+}

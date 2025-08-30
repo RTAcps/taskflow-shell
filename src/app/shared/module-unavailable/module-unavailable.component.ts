@@ -36,7 +36,7 @@ import { RouterModule } from '@angular/router';
       padding: 2rem;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       text-align: center;
-      max-width: 500px;
+      max-width: 800px;
       width: 100%;
     }
     .icon-container {
@@ -48,6 +48,8 @@ import { RouterModule } from '@angular/router';
     }
     h2 {
       color: var(--text-color, #333333);
+      font-size: 1.5rem;
+      font-weight: 700;
       margin-bottom: 1rem;
     }
     p {

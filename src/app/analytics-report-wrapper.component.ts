@@ -50,47 +50,42 @@ export class AnalyticsReportWrapperComponent implements OnInit {
       const module = await loadRemoteModule({
         type: 'module',
         remoteEntry: environment.remoteUrls['taskflow-functional'],
-        exposedModule: './AnalyticsReportComponent'
+        exposedModule: './Component'
       });
       
-      // Try to find the component by different strategies
-      let component = null;
+      console.log('✅ Módulo de analytics carregado:', module);
       
-      // 1. Try direct access to the named export
-      if (module.AnalyticsReportComponent) {
-        component = module.AnalyticsReportComponent;
-      } 
-      // 2. Try to find a component by naming convention
-      else {
-        const componentKey = Object.keys(module).find(key => 
-          typeof module[key] === 'function' && 
-          key.endsWith('Component')
-        );
-        
-        if (componentKey) {
-          component = module[componentKey];
-        }
+      // Tenta encontrar o componente no módulo
+      let component = this.moduleFederationService.findComponentInRemoteModule(module, './Component');
+      
+      if (!component && module.default) {
+        component = module.default;
       }
       
       if (component) {
+        console.log('🎯 Componente de analytics encontrado:', component);
         this.analyticsComponent = component;
+        return;
       } else {
-        throw new Error('Component não encontrado no módulo remoto');
+        throw new Error('Componente não encontrado no módulo remoto');
       }
     } catch (error) {
-      console.error('Erro ao carregar componente de análise:', error);
+      console.error('❌ Erro ao carregar componente de análise remoto:', error);
       
-      // Se atingiu o número máximo de tentativas, mostra o erro e redireciona
+      // Se atingiu o número máximo de tentativas, mostra erro final
       if (this.retryCount >= this.maxRetries) {
+        console.error('❌ Máximo de tentativas atingido. MFE indisponível.');
+        
         this.notificationService.showErrorWithRedirect(
-          'Não foi possível carregar o módulo de análise. Você será redirecionado para a página inicial.',
+          'Não foi possível carregar o módulo de análise. Verifique se o MFE está rodando e acessível.',
           '/home',
           8000,
-          'Erro ao carregar relatório de análise'
+          'Erro ao carregar MFE'
         );
       } else {
         // Tenta novamente
         this.retryCount++;
+        console.log(`🔄 Tentativa ${this.retryCount}/${this.maxRetries} - Tentando novamente em 1.5s...`);
         setTimeout(() => this.loadAnalyticsComponent(), 1500);
       }
     }
