@@ -10,13 +10,10 @@ module.exports = withModuleFederationPlugin({
   shared: {
     ...shareAll({ 
       singleton: true, 
-      strictVersion: false, 
+      strictVersion: false,
       requiredVersion: 'auto',
-      eager: false 
+      eager: false
     }),
-  },
-  experiments: {
-    federationRuntime: 'hoisted'
   }
 });
 

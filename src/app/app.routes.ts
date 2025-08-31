@@ -3,6 +3,7 @@ import { environment } from '../environments/environment';
 import { HomeComponent } from './home/home.component';
 import { ModuleUnavailableComponent } from './shared/module-unavailable/module-unavailable.component';
 import { ModuleFederationHelper } from './core/utils/module-federation-helper';
+import { ManualModuleLoader } from './core/utils/manual-module-loader';
 
 /**
  * Load a remote component of the MFEs
@@ -16,40 +17,62 @@ const loadRemoteComponent = (
     console.log(`🔄 Attempting to load ${remoteName} -> ${exposedModule}`);
     console.log(`📍 Remote URL: ${environment.remoteUrls[remoteName]}`);
     
-    return ModuleFederationHelper.loadRemoteModuleWithRetry({
-      remoteEntry: environment.remoteUrls[remoteName],
-      exposedModule: exposedModule,
-      remoteName: remoteName,
-      maxRetries: 3,
-      retryDelay: 1000
-    })
-    .then((m: any) => {
-      console.log(`✅ Module loaded for ${remoteName}:`, Object.keys(m));
-      
-      const component = findComponentInModule(m, exposedModule);
-      if (component) {
-        if (typeof component === 'function') {
-          console.log(`✅ Component found and validated for ${remoteName} -> ${exposedModule}`);
-          return component;
+    return ManualModuleLoader.loadRemoteModule(remoteName, exposedModule)
+      .then((m: any) => {
+        console.log(`✅ Module loaded for ${remoteName} using manual loader:`, Object.keys(m));
+        
+        const component = findComponentInModule(m, exposedModule);
+        if (component) {
+          if (typeof component === 'function') {
+            console.log(`✅ Component found and validated for ${remoteName} -> ${exposedModule}`);
+            return component;
+          }
+          
+          console.error(`❌ Export encontrado mas não é um componente válido: ${typeof component}`);
+          return ModuleUnavailableComponent;
         }
         
-        console.error(`❌ Export encontrado mas não é um componente válido: ${typeof component}`);
+        console.error(`❌ Nenhum componente encontrado no módulo ${exposedModule}`);
         return ModuleUnavailableComponent;
-      }
-      
-      console.error(`❌ Nenhum componente encontrado no módulo ${exposedModule}`);
-      return ModuleUnavailableComponent;
-    })
-    .catch((err: any) => {
-      console.error(`❌ Erro ao carregar ${remoteName} -> ${exposedModule}:`, err);
-      
-      if (err?.message?.includes('CORS')) {
-        console.error(`🔧 DICA: Este erro de CORS indica que o MFE ${remoteName} está configurado para aceitar apenas o domínio de produção.`);
-        console.error(`🔧 Para desenvolvimento local, o MFE precisa permitir 'http://localhost:4200' nas configurações de CORS.`);
-      }
-      
-      return ModuleUnavailableComponent;
-    });
+      })
+      .catch((err) => {
+        console.log(`⚠️ Carregador manual falhou, tentando abordagem padrão...`, err);
+        
+        return ModuleFederationHelper.loadRemoteModuleWithRetry({
+          remoteEntry: environment.remoteUrls[remoteName],
+          exposedModule: exposedModule,
+          remoteName: remoteName,
+          maxRetries: 3,
+          retryDelay: 1000
+        })
+        .then((m: any) => {
+          console.log(`✅ Module loaded for ${remoteName} with fallback loader:`, Object.keys(m));
+          
+          const component = findComponentInModule(m, exposedModule);
+          if (component) {
+            if (typeof component === 'function') {
+              console.log(`✅ Component found and validated for ${remoteName} -> ${exposedModule}`);
+              return component;
+            }
+            
+            console.error(`❌ Export encontrado mas não é um componente válido: ${typeof component}`);
+            return ModuleUnavailableComponent;
+          }
+          
+          console.error(`❌ Nenhum componente encontrado no módulo ${exposedModule}`);
+          return ModuleUnavailableComponent;
+        })
+        .catch((err: any) => {
+          console.error(`❌ Erro ao carregar ${remoteName} -> ${exposedModule}:`, err);
+          
+          if (err?.message?.includes('CORS')) {
+            console.error(`🔧 DICA: Este erro de CORS indica que o MFE ${remoteName} está configurado para aceitar apenas o domínio de produção.`);
+            console.error(`🔧 Para desenvolvimento local, o MFE precisa permitir 'http://localhost:4200' nas configurações de CORS.`);
+          }
+          
+          return ModuleUnavailableComponent;
+        });
+      });
   };
 };
 

@@ -1,10 +1,12 @@
 import { loadRemoteModule } from '@angular-architects/module-federation';
+import { ModulePerformanceService } from '../services/module-performance.service';
 
 /**
  * Helper to load remote modules with robust error handling
  */
 export class ModuleFederationHelper {
-  private static loadingCache = new Map<string, Promise<any>>();
+  private static readonly loadingCache = new Map<string, Promise<any>>();
+  private static readonly performanceService = new ModulePerformanceService();
   
   /**
    * Load a remote module with automatic retry and caching
@@ -24,12 +26,19 @@ export class ModuleFederationHelper {
       return this.loadingCache.get(cacheKey);
     }
     
+    this.performanceService.startLoading(remoteName, exposedModule, 'standard');
+    
     const loadingPromise = this.attemptLoad(remoteEntry, exposedModule, remoteName, maxRetries, retryDelay);
     this.loadingCache.set(cacheKey, loadingPromise);
 
-    loadingPromise.catch(() => {
-      this.loadingCache.delete(cacheKey);
-    });
+    loadingPromise
+      .then(() => {
+        this.performanceService.completeLoading(remoteName, exposedModule, 'standard');
+      })
+      .catch((error) => {
+        this.performanceService.failLoading(remoteName, exposedModule, 'standard', error);
+        this.loadingCache.delete(cacheKey);
+      });
     
     return loadingPromise;
   }
@@ -84,7 +93,7 @@ export class ModuleFederationHelper {
   }
   
   private static isRetryableError(error: any): boolean {
-    if (!error || !error.message) return false;
+    if (!error?.message) return false;
     
     const retryableMessages = [
       'is not a function',
