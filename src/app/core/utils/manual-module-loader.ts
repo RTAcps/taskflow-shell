@@ -1,7 +1,6 @@
 
 import { environment } from '../../../environments/environment';
 import { ModuleUnavailableComponent } from '../../shared/module-unavailable/module-unavailable.component';
-import { CompatibilityErrorComponent } from '../../shared/compatibility-error/compatibility-error.component';
 import { ModulePerformanceService } from '../services/module-performance.service';
 
 /**
@@ -159,15 +158,17 @@ export class ManualModuleLoader {
       console.error(`🔧 Para desenvolvimento local, o MFE precisa permitir 'http://localhost:4200' nas configurações de CORS.`);
     }
     
-    const isCompatibilityError = 
-      error instanceof Error && (
+    // Log specific compatibility errors for debugging
+    if (error instanceof Error && (
         error.message.includes('is not a function') || 
         error.message.includes('init is not a function') || 
         error.message.includes('get is not a function')
-      );
+      )) {
+      console.error(`❗ Erro de compatibilidade detectado: ${error.message}`);
+    }
     
     return { 
-      default: isCompatibilityError ? CompatibilityErrorComponent : ModuleUnavailableComponent 
+      default: ModuleUnavailableComponent 
     };
   }
   
