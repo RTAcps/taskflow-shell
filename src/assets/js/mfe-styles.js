@@ -1,15 +1,43 @@
 /* Script to inject styles for MFE components */
 (function() {
   'use strict';
+  
+  console.log('🎨 MFE Styles: Script carregado');
+
+  // Função para aplicar os estilos específicos dos MFEs
+  function applyMfeStyles() {
+    console.log('🎨 Aplicando estilos para componentes MFE');
+    
+    // Carregar as folhas de estilo com caminho relativo
+    loadStylesheet('/assets/mfe-styles/component-styles.css');
+    loadStylesheet('/assets/mfe-styles/component-overrides.css');
+    loadStylesheet('/assets/mfe-styles/kanban-overrides.css');
+    loadStylesheet('/assets/mfe-styles/tailwind-shim.css');
+  }
+  
+  // Função auxiliar para carregar stylesheet
+  function loadStylesheet(path) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = path;
+    link.onload = () => console.log(`✅ Carregado: ${path}`);
+    link.onerror = () => console.error(`❌ Falha ao carregar: ${path}`);
+    document.head.appendChild(link);
+  }
 
   document.addEventListener('DOMContentLoaded', function() {
+    console.log('🎨 MFE Styles: DOM carregado, monitorando componentes');
+    
+    // Aplicar estilos imediatamente e também monitorar inserções futuras
+    applyMfeStyles();
+    
     const checkInterval = setInterval(function() {
       const projectListComponent = document.querySelector('app-project-list');
       const kanbanBoardComponent = document.querySelector('app-kanban-board');
       const projectFormComponent = document.querySelector('app-project-form');
       
       if (projectListComponent || kanbanBoardComponent || projectFormComponent) {
-        console.log('MFE components detected, applying styles');
+        console.log('🎨 Componentes MFE detectados, reaplicando estilos específicos');
         clearInterval(checkInterval);
         applyMfeStyles();
       }

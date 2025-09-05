@@ -54,6 +54,30 @@ export class ManualModuleLoader {
       
       this.setupWebpackGlobals();
       
+      // Detecta se estamos em modo local acessando MFEs em produção
+      const isLocalAccessingProd = window.location.hostname === 'localhost' && remoteUrl.includes('netlify.app');
+      
+      if (isLocalAccessingProd && environment.bypassRemoteLoading) {
+        // Se estamos em localhost acessando um MFE em produção e bypassRemoteLoading está habilitado,
+        // usamos o mock diretamente
+        console.log(`⚠️ Modo de compatibilidade: Carregando módulo simulado para ${remoteName} em ambiente local`);
+        await this.createMockContainer(remoteName);
+        return;
+      }
+      
+      // Se forceManualLoad estiver habilitado, tentamos o carregamento ESM primeiro
+      if (environment.forceManualLoad && environment.esmCompatMode) {
+        console.log(`🔄 Tentativa especial: Carregando como ESM com compatibilidade total: ${urlWithVersion}`);
+        try {
+          await this.loadEsmModuleWithCompatibility(urlWithVersion, remoteName);
+          console.log(`✅ Carregamento ESM com compatibilidade iniciado: ${remoteName}`);
+          return;
+        } catch (esmError) {
+          console.warn(`⚠️ Falha no carregamento ESM com compatibilidade:`, esmError);
+          // Continua com outros métodos de carregamento
+        }
+      }
+      
       // Try different loading strategies in sequence
       try {
         // Strategy 1: Direct script loading
@@ -63,6 +87,51 @@ export class ManualModuleLoader {
       } catch (error) {
         const directLoadError = error as Error;
         console.warn(`⚠️ Falha no carregamento direto:`, directLoadError);
+        
+        // Verificar se o erro é relacionado a "import.meta"
+        const isImportMetaError = directLoadError.toString().includes('import.meta');
+        const isESMError = isImportMetaError || directLoadError.toString().includes('outside a module');
+        
+        if (isESMError) {
+          // Para erros de import.meta e ESM, tentamos carregar com várias estratégias
+          try {
+            console.log(`🔄 Tentativa especial: Carregando com estratégia de compatibilidade ESM: ${urlWithVersion}`);
+            
+            // Primeiro, configuramos polyfills e variáveis necessárias para ESM
+            const compatScript = document.createElement('script');
+            compatScript.textContent = `
+              // Polyfill para import.meta
+              if (typeof window.importMeta === 'undefined') {
+                window.importMeta = { url: '${window.location.origin}' };
+              }
+              
+              // Variáveis globais para compatibilidade
+              window.__LOCAL_DEV_MFE_COMPAT__ = true;
+              
+              // Suporte para g não iterável
+              try {
+                window.__webpack_require__ = window.__webpack_require__ || {};
+                window.__webpack_share_scopes__ = window.__webpack_share_scopes__ || {};
+              } catch(e) { console.warn("Erro ao configurar ambiente webpack:", e); }
+            `;
+            document.head.appendChild(compatScript);
+            
+            // Então carregamos o script como módulo
+            const script = document.createElement('script');
+            script.type = 'module';
+            script.crossOrigin = 'anonymous';
+            script.src = urlWithVersion;
+            script.onerror = (e) => console.error("Erro ao carregar módulo ESM:", e);
+            document.head.appendChild(script);
+            
+            // Criamos um mock container enquanto aguarda o carregamento do módulo
+            await this.createMockContainer(remoteName);
+            console.log(`✅ Fallback para módulo ESM configurado com compatibilidade estendida: ${remoteName}`);
+            return;
+          } catch (esmError) {
+            console.warn(`⚠️ Falha no carregamento com estratégia de compatibilidade ESM:`, esmError);
+          }
+        }
         
         try {
           // Strategy 2: Module script loading
@@ -86,7 +155,7 @@ export class ManualModuleLoader {
                 if (proxySuccess) break;
                 
                 try {
-                  const corsProxyUrl = `${proxyUrl}${urlWithVersion}`;
+                  const corsProxyUrl = `${proxyUrl}${encodeURIComponent(urlWithVersion)}`;
                   console.log(`🔄 Tentativa 3: Carregamento via CORS proxy: ${proxyUrl}`);
                   await this.loadScriptAsPromise(corsProxyUrl, false);
                   console.log(`✅ Carregamento via CORS proxy bem-sucedido: ${proxyUrl}`);
@@ -104,15 +173,18 @@ export class ManualModuleLoader {
                   console.log(`✅ Carregamento com fetch e eval bem-sucedido`);
                 } catch (fetchError) {
                   console.error(`❌ Todas as tentativas de carregamento falharam:`, fetchError);
-                  throw new Error(`Falha em todas as tentativas de carregamento do script: ${urlWithVersion}`);
+                  await this.createMockContainer(remoteName);
+                  console.log(`⚠️ Usando container mock para ${remoteName}`);
                 }
               }
             } else {
               console.warn(`⚠️ Proxy CORS desativado nas configurações. Usando fallback.`);
-              await this.loadScriptWithFetchAndEval(urlWithVersion, remoteName);
+              await this.createMockContainer(remoteName);
             }
           } else {
-            throw moduleLoadError; // Re-throw if not CORS related
+            // Se não for CORS, tente um fallback
+            console.warn(`⚠️ Problema não relacionado a CORS. Usando fallback.`);
+            await this.createMockContainer(remoteName);
           }
         }
       }
@@ -122,8 +194,66 @@ export class ManualModuleLoader {
       this.logAvailableWindowObjects(remoteName);
     } catch (error) {
       console.error(`❌ Erro no carregamento do script:`, error);
-      throw error;
+      // Última tentativa - criar um container mock
+      await this.createMockContainer(remoteName);
     }
+  }
+  
+  /**
+   * Creates a mock container for a remote module
+   */
+  private static async createMockContainer(remoteName: string): Promise<void> {
+    console.log(`🔧 Criando container mock para ${remoteName}`);
+    
+    // Container mock com métodos necessários
+    const mockContainer = {
+      init: (shareScope: any) => {
+        console.log(`Mock container ${remoteName}.init() chamado com:`, shareScope);
+        return Promise.resolve();
+      },
+      get: (module: string) => {
+        console.log(`Mock container ${remoteName}.get(${module}) chamado`);
+        return Promise.resolve(() => ({ 
+          default: ModuleUnavailableComponent,
+          __isMock: true,
+          __remoteName: remoteName,
+          __moduleName: module
+        }));
+      }
+    };
+    
+    // Possíveis nomes para o container
+    const possibleNames = [
+      remoteName, 
+      `${remoteName}Container`,
+      remoteName.replace(/-/g, '_'),
+      `${remoteName.replace(/-/g, '_')}Container`,
+      `mfe_${remoteName}`,
+      `mf_${remoteName}`,
+      `webpackChunk${remoteName.replace(/-/g, '_')}`
+    ];
+    
+    // Registrar o container mock em todos os possíveis nomes
+    possibleNames.forEach(name => {
+      if (!(window as any)[name]) {
+        console.log(`🔧 Registrando container mock como ${name}`);
+        (window as any)[name] = mockContainer;
+      } else {
+        console.log(`⚠️ Container já existe para ${name}, estendendo...`);
+        const existingContainer = (window as any)[name];
+        
+        // Se existir mas não tiver os métodos necessários, adiciona-os
+        if (!existingContainer.get || typeof existingContainer.get !== 'function') {
+          existingContainer.get = mockContainer.get;
+        }
+        
+        if (!existingContainer.init || typeof existingContainer.init !== 'function') {
+          existingContainer.init = mockContainer.init;
+        }
+      }
+    });
+    
+    return Promise.resolve();
   }
   
   /**
@@ -407,19 +537,78 @@ export class ManualModuleLoader {
     }
     
     try {
+      // Garantir que o objeto de compartilhamento está configurado corretamente
+      if (!(window as any).__webpack_share_scopes__) {
+        (window as any).__webpack_share_scopes__ = { default: {} };
+      }
+      
+      // Para lidar com erro "g is not iterable", adiciona polyfills específicos
+      try {
+        // Verificar se Symbol.iterator está disponível (pode não estar em alguns ambientes)
+        const hasSymbolIterator = typeof Symbol !== 'undefined' && Symbol.iterator;
+        
+        // Criar um objeto de compartilhamento simplificado
+        const safeShareScope: any = {
+          // Essencial para não dar "g is not iterable"
+          get: function(module: string) { 
+            return (window as any).__webpack_share_scopes__.default[module] || {}; 
+          },
+          init: function() { return Promise.resolve(); }
+        };
+        
+        // Adicionar Symbol.iterator apenas se disponível
+        if (hasSymbolIterator) {
+          safeShareScope[Symbol.iterator] = function*() { 
+            yield* Object.entries((window as any).__webpack_share_scopes__.default); 
+          };
+        }
+        
+        // Atualiza o escopo de compartilhamento com os polyfills
+        (window as any).__webpack_share_scopes__.default = {
+          ...(window as any).__webpack_share_scopes__.default,
+          ...safeShareScope
+        };
+      } catch (e) {
+        console.warn('⚠️ Falha ao configurar polyfills para "g is not iterable":', e);
+      }
+
       if (typeof container.init === 'function') {
         try {
-          await Promise.resolve(container.init((window as any).__webpack_share_scopes__.default));
-          console.log(`✅ Container inicializado via init()`);
-        } catch (initError) {
-          console.warn(`⚠️ Erro no init() padrão:`, initError);
+          // Tenta inicializar com tratamento especial para "g is not iterable"
+          const shareScope = (window as any).__webpack_share_scopes__.default;
           
           try {
-            await Promise.resolve(container.init());
-            console.log(`✅ Container inicializado via init() sem parâmetros`);
-          } catch (simpleInitError) {
-            console.warn(`⚠️ Erro no init() sem parâmetros:`, simpleInitError);
+            console.log(`🔄 Inicializando container via init() com escopo seguro`);
+            await Promise.resolve(container.init(shareScope));
+            console.log(`✅ Container inicializado via init()`);
+          } catch (initError) {
+            const errorStr = String(initError);
+            
+            // Tratamento específico para o erro "g is not iterable"
+            if (errorStr.includes('is not iterable')) {
+              console.warn(`⚠️ Detectado erro "g is not iterable", tentando inicialização alternativa`);
+              
+              // Versão simplificada do escopo de compartilhamento
+              const simpleShareScope = { default: {} };
+              
+              try {
+                await Promise.resolve(container.init(simpleShareScope));
+                console.log(`✅ Container inicializado via init() com escopo simples`);
+              } catch (simpleError) {
+                // Última tentativa - sem parâmetros
+                await Promise.resolve(container.init());
+                console.log(`✅ Container inicializado via init() sem parâmetros`);
+              }
+            } else {
+              console.warn(`⚠️ Erro no init() padrão:`, initError);
+              
+              // Tentativa sem parâmetros
+              await Promise.resolve(container.init());
+              console.log(`✅ Container inicializado via init() sem parâmetros`);
+            }
           }
+        } catch (allInitError) {
+          console.warn(`⚠️ Todas as tentativas de init() falharam:`, allInitError);
         }
       } 
       else if (container.initPromise && typeof container.initPromise.then === 'function') {
@@ -432,8 +621,12 @@ export class ManualModuleLoader {
           console.log(`✅ Inicializado via __webpack_init_sharing__`);
           
           if (typeof container.init === 'function') {
-            await Promise.resolve(container.init((window as any).__webpack_share_scopes__.default));
-            console.log(`✅ Container inicializado após __webpack_init_sharing__`);
+            try {
+              await Promise.resolve(container.init((window as any).__webpack_share_scopes__.default));
+              console.log(`✅ Container inicializado após __webpack_init_sharing__`);
+            } catch (postShareError) {
+              console.warn(`⚠️ Erro após __webpack_init_sharing__:`, postShareError);
+            }
           }
         } catch (sharingError) {
           console.warn(`⚠️ Erro ao inicializar via __webpack_init_sharing__:`, sharingError);
@@ -575,7 +768,14 @@ export class ManualModuleLoader {
       console.log(`✅ Usando módulo diretamente`);
     }
     
-    console.log(`✅ Módulo carregado com sucesso:`, module);
+    // Log apenas as chaves do módulo para evitar problemas de serialização circular
+    try {
+      const moduleKeys = module ? Object.keys(module) : [];
+      console.log(`✅ Módulo carregado com sucesso:`, moduleKeys);
+    } catch (e) {
+      console.log(`✅ Módulo carregado com sucesso (não serializado)`);
+    }
+    
     return module;
   }
   
@@ -585,37 +785,57 @@ export class ManualModuleLoader {
   private static handleLoadingError(error: any, remoteName: string, exposedModule: string): any {
     console.error(`❌ Erro no carregamento manual de ${remoteName} -> ${exposedModule}:`, error);
     
-    // Enhanced CORS error handling
     const errorStr = String(error); // Safe conversion to string
-    if (error instanceof Error && (error.message.includes('CORS') || errorStr.includes('CORS'))) {
+    
+    // import.meta error handling (common in production builds using ESM)
+    if (errorStr.includes('import.meta') || errorStr.includes('outside a module')) {
+      console.error(`🔧 Erro de import.meta detectado: Este erro ocorre quando um módulo ESM é carregado como script regular.`);
+      console.error(`🔧 Solução 1: Verifique se o MFE ${remoteName} está configurado para usar Module Federation compatível com ESM.`);
+      console.error(`🔧 Solução 2: Use o atributo type="module" ao carregar o remoteEntry.js.`);
+      console.error(`🔧 Solução 3: Em ambiente de desenvolvimento local, prefira executar todos os MFEs localmente.`);
+    }
+    
+    // "g is not iterable" error handling (common in Module Federation incompatibility)
+    if (errorStr.includes('is not iterable')) {
+      console.error(`🔧 Erro de compatibilidade: "is not iterable" geralmente indica incompatibilidade de versões do Webpack.`);
+      console.error(`🔧 Solução 1: Alinhe as versões do Webpack entre o shell e o MFE ${remoteName}.`);
+      console.error(`🔧 Solução 2: Em ambiente de desenvolvimento local, habilite a opção bypassRemoteLoading no environment.`);
+    }
+    
+    // Enhanced CORS error handling
+    if (errorStr.includes('CORS')) {
       console.error(`🔧 DICA: Este erro de CORS indica que o MFE ${remoteName} está configurado para aceitar apenas o domínio de produção.`);
       console.error(`🔧 Para desenvolvimento local, você pode usar uma das seguintes soluções:`);
       console.error(`   1. Configure o MFE ${remoteName} para permitir 'http://localhost:4200' nas configurações de CORS.`);
       console.error(`   2. Use uma extensão de navegador para desabilitar CORS durante desenvolvimento.`);
       console.error(`   3. Configure um proxy local para contornar o CORS.`);
       console.error(`   4. Execute o shell em HTTPS usando 'ng serve --ssl' se o MFE aceitar HTTPS.`);
+      console.error(`   5. Adicione "bypassRemoteLoading: true" no environment para usar componentes mock em desenvolvimento.`);
     }
     
     // Enhanced compatibility error handling
-    if (error instanceof Error && (
-        error.message.includes('is not a function') || 
-        error.message.includes('init is not a function') || 
-        error.message.includes('get is not a function')
-      )) {
-      console.error(`❗ Erro de compatibilidade do Webpack/Module Federation detectado: ${error.message}`);
+    if (errorStr.includes('is not a function') || 
+        errorStr.includes('init is not a function') || 
+        errorStr.includes('get is not a function')) {
+      console.error(`❗ Erro de compatibilidade do Webpack/Module Federation detectado: ${errorStr}`);
       console.error(`🔧 Isso geralmente indica diferenças de versão entre o shell e o MFE ${remoteName}.`);
       console.error(`   Certifique-se de que ambos usem versões compatíveis do Angular e Webpack.`);
     }
     
     // Network errors
-    if (error instanceof Error && (
-        error.message.includes('Failed to fetch') || 
-        error.message.includes('NetworkError') ||
-        error.message.includes('Network request failed')
-      )) {
+    if (errorStr.includes('Failed to fetch') || 
+        errorStr.includes('NetworkError') ||
+        errorStr.includes('Network request failed')) {
       console.error(`🌐 Erro de rede detectado ao carregar ${remoteName}.`);
       console.error(`🔧 Verifique se a URL do MFE está correta e se o serviço está online.`);
       console.error(`   URL atual: ${environment.remoteUrls[remoteName as keyof typeof environment.remoteUrls]}`);
+    }
+    
+    // Local vs Production mismatch
+    if (window.location.hostname === 'localhost' && 
+        environment.remoteUrls[remoteName as keyof typeof environment.remoteUrls]?.includes('netlify.app')) {
+      console.error(`⚠️ Detectada tentativa de carregar MFE de produção em ambiente local.`);
+      console.error(`🔧 Recomendação: Para desenvolvimento, execute os MFEs localmente ou use bypassRemoteLoading.`);
     }
     
     // Return a useful fallback component that will show the error
@@ -625,8 +845,10 @@ export class ManualModuleLoader {
       _errorDetails: {
         remoteName,
         exposedModule,
-        error: error instanceof Error ? error.message : String(error),
-        timestamp: new Date().toISOString()
+        error: errorStr,
+        timestamp: new Date().toISOString(),
+        isLocalDevelopment: window.location.hostname === 'localhost',
+        remoteUrl: environment.remoteUrls[remoteName as keyof typeof environment.remoteUrls]
       }
     };
   }
@@ -643,5 +865,135 @@ export class ManualModuleLoader {
    */
   static isWebpackAvailable(): boolean {
     return typeof (window as any).__webpack_require__ !== 'undefined';
+  }
+  
+  /**
+   * Carrega um módulo ESM com compatibilidade especial para ambientes mistos
+   * Esta abordagem funciona melhor para MFEs em produção com import.meta
+   */
+  private static async loadEsmModuleWithCompatibility(url: string, remoteName: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      try {
+        console.log(`🔄 Carregando módulo ESM com compatibilidade: ${url}`);
+        
+        // 1. Primeiro, configura polyfills e proxies necessários
+        // Prevenir erro de import.meta
+        if (typeof (window as any).importMeta === 'undefined') {
+          (window as any).importMeta = { url: window.location.origin };
+        }
+        
+        // Prevenir erro de iteração (i.forEach is not a function)
+        const originalForEach = Array.prototype.forEach;
+        
+        // Usamos arrow function para evitar problemas com 'this'
+        const safeForEach = function(
+          this: any[], 
+          callback: (value: any, index: number, array: any[]) => void, 
+          thisArg?: any
+        ) {
+          // Garantir que estamos chamando forEach em um array
+          if (!Array.isArray(this)) {
+            console.warn('⚠️ forEach chamado em um não-array, tentando converter:', this);
+            try {
+              const arr = Array.from(Object(this));
+              return originalForEach.call(arr, callback, thisArg);
+            } catch (e) {
+              console.warn('⚠️ Não foi possível converter para array:', e);
+              // Fallback: iterar com um for...in loop
+              const obj = Object(this);
+              const keys = Object.keys(obj);
+              for (let i = 0; i < keys.length; i++) {
+                callback.call(thisArg, obj[keys[i]], i, obj);
+              }
+              return undefined;
+            }
+          }
+          return originalForEach.call(this, callback, thisArg);
+        };
+        
+        // Guardar a referência original para restaurar depois
+        const originalArrayForEach = Array.prototype.forEach;
+        
+        // Substituir temporariamente para usar nossa versão segura
+        Array.prototype.forEach = safeForEach as any;
+        
+        // 2. Criar tag de script com type="module"
+        const script = document.createElement('script');
+        script.type = 'module';
+        script.crossOrigin = 'anonymous';
+        script.src = url;
+        
+        script.onload = async () => {
+          console.log(`✅ Módulo ESM carregado: ${url}`);
+          
+          // Restaurar o forEach original após o carregamento
+          Array.prototype.forEach = originalArrayForEach;
+          
+          // Dar tempo para inicialização
+          await this.delay(1000);
+          
+          // Verificar se o container foi carregado
+          const containerFound = this.checkForContainer(remoteName);
+          if (!containerFound) {
+            console.warn(`⚠️ Container não detectado após carregamento ESM, criando mock para ${remoteName}`);
+            await this.createMockContainer(remoteName);
+          }
+          
+          resolve();
+        };
+        
+        script.onerror = (e) => {
+          console.error(`❌ Erro ao carregar módulo ESM: ${url}`, e);
+          
+          // Restaurar o forEach original após erro
+          Array.prototype.forEach = originalArrayForEach;
+          
+          reject(new Error(`Falha ao carregar módulo ESM: ${url}`));
+        };
+        
+        // 3. Adicionar o script ao documento
+        document.head.appendChild(script);
+        
+        // 4. Definir um timeout de segurança
+        setTimeout(() => {
+          const containerFound = this.checkForContainer(remoteName);
+          if (!containerFound) {
+            console.warn(`⚠️ Timeout no carregamento ESM, tentando criar container mock para ${remoteName}`);
+            this.createMockContainer(remoteName)
+              .then(() => resolve())
+              .catch(err => reject(err));
+          } else {
+            resolve();
+          }
+        }, 5000);
+      } catch (error) {
+        console.error(`❌ Erro na configuração do carregamento ESM:`, error);
+        reject(error);
+      }
+    });
+  }
+  
+  /**
+   * Verifica se o container para o MFE foi carregado
+   */
+  private static checkForContainer(remoteName: string): boolean {
+    const possibleNames = [
+      remoteName, 
+      `${remoteName}Container`,
+      remoteName.replace(/-/g, '_'),
+      `${remoteName.replace(/-/g, '_')}Container`,
+      `mfe_${remoteName}`,
+      `mf_${remoteName}`,
+      `webpackChunk${remoteName.replace(/-/g, '_')}`,
+      this.toCamelCase(remoteName),
+      `${this.toCamelCase(remoteName)}Container`,
+      remoteName.toLowerCase(),
+      remoteName.toUpperCase()
+    ];
+    
+    return possibleNames.some(name => {
+      const obj = (window as any)[name];
+      return obj && (typeof obj.get === 'function' || typeof obj.init === 'function');
+    });
   }
 }

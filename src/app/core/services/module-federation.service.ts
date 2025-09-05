@@ -115,13 +115,23 @@ export class ModuleFederationService {
    * @returns The component class or undefined if not found
    */
   findComponentInRemoteModule(module: any, expectedName?: string): any {
+    console.log(`🔍 Procurando componente no módulo:`, module);
+    console.log(`🔍 Nome esperado:`, expectedName);
+    
+    if (!module) {
+      console.error('❌ Módulo vazio ou undefined');
+      return undefined;
+    }
+    
     // First try the expected name if provided
     if (expectedName && module[expectedName]) {
+      console.log(`✅ Componente encontrado via nome esperado: ${expectedName}`);
       return module[expectedName];
     }
     
     // Then try known naming conventions for component exports
     if (module.default) {
+      console.log(`✅ Componente encontrado via default export`);
       // ESM default export
       return module.default;
     }
@@ -133,6 +143,7 @@ export class ModuleFederationService {
     );
     
     if (componentKey) {
+      console.log(`✅ Componente encontrado via padrão de nome: ${componentKey}`);
       return module[componentKey];
     }
     
@@ -142,6 +153,12 @@ export class ModuleFederationService {
       module[key].prototype
     );
     
-    return anyComponentLikeKey ? module[anyComponentLikeKey] : undefined;
+    if (anyComponentLikeKey) {
+      console.log(`✅ Componente encontrado via busca genérica: ${anyComponentLikeKey}`);
+      return module[anyComponentLikeKey];
+    }
+    
+    console.error('❌ Nenhum componente encontrado no módulo');
+    return undefined;
   }
 }
