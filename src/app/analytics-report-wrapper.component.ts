@@ -50,13 +50,13 @@ export class AnalyticsReportWrapperComponent implements OnInit {
       const module = await loadRemoteModule({
         type: 'module',
         remoteEntry: environment.remoteUrls['taskflow-functional'],
-        exposedModule: './Component'
+        exposedModule: './AnalyticsReportComponent'
       });
       
       console.log('✅ Módulo de analytics carregado:', module);
       
       // Tenta encontrar o componente no módulo
-      let component = this.moduleFederationService.findComponentInRemoteModule(module, './Component');
+      let component = this.moduleFederationService.findComponentInRemoteModule(module, 'AnalyticsReportComponent');
       
       if (!component && module.default) {
         component = module.default;
