@@ -18,8 +18,8 @@ export const routes: Routes = [
         loadComponent: () =>
             loadRemoteModule({
                 remoteName: 'taskflow-component',
-                exposedModule: './Routes',
-            }).then((c) => c.routes),
+                exposedModule: './ProjectListComponent',
+            }).then((c) => c.ProjectListComponent),
     },
     {
         path: 'real-time-collaboration',
