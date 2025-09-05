@@ -8,6 +8,6 @@ module.exports = withModuleFederationPlugin({
     "taskflow-functional": "taskflow-functional@https://taskflow-functional.netlify.app/remoteEntry.js",
   },
   shared: {
-    ...shareAll({ singleton: true, strictVersion: true, requiredVersion: 'auto' }),
+    ...shareAll({ singleton: true, strictVersion: false, requiredVersion: 'auto' }),
   },
 });
